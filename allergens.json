@@ -1,0 +1,451 @@
+{
+ "_meta": {
+  "source": "식품등의 표시기준 알레르기 유발물질 표시 대상 19개 항목 (조개류: 굴·전복·홍합 포함)",
+  "fields": "label=음성 안내용 이름, aliases=패키지에 직접 쓰이는 표기, derived=해당 알레르겐에서 유래한 원재료(원재료명에서 추론용), high_risk=아나필락시스 위험이 높아 강조 안내, en=영문 표기(수입품·사용자 설정용)"
+ },
+ "allergens": [
+  {
+   "id": "EGG",
+   "label": "알류",
+   "high_risk": true,
+   "aliases": [
+    "알류",
+    "난류",
+    "계란",
+    "달걀",
+    "가금류"
+   ],
+   "derived": [
+    "전란",
+    "전란액",
+    "전란분",
+    "난백",
+    "난백분",
+    "난황",
+    "난황분",
+    "메추리알",
+    "오리알",
+    "마요네즈",
+    "에그"
+   ],
+   "en": [
+    "egg",
+    "eggs"
+   ]
+  },
+  {
+   "id": "MILK",
+   "label": "우유",
+   "high_risk": true,
+   "aliases": [
+    "우유",
+    "유제품"
+   ],
+   "derived": [
+    "탈지분유",
+    "전지분유",
+    "분유",
+    "혼합분유",
+    "유청",
+    "유청분말",
+    "유청단백",
+    "버터",
+    "치즈",
+    "크림",
+    "생크림",
+    "연유",
+    "가당연유",
+    "카제인",
+    "카제인나트륨",
+    "유당",
+    "락토스",
+    "우유단백",
+    "발효유",
+    "요구르트",
+    "요거트",
+    "버터밀크",
+    "밀크"
+   ],
+   "en": [
+    "milk",
+    "whey",
+    "butter",
+    "cream",
+    "cheese",
+    "casein",
+    "lactose"
+   ]
+  },
+  {
+   "id": "BUCKWHEAT",
+   "label": "메밀",
+   "high_risk": true,
+   "aliases": [
+    "메밀"
+   ],
+   "derived": [
+    "메밀가루",
+    "메밀면"
+   ],
+   "en": [
+    "buckwheat"
+   ]
+  },
+  {
+   "id": "PEANUT",
+   "label": "땅콩",
+   "high_risk": true,
+   "aliases": [
+    "땅콩"
+   ],
+   "derived": [
+    "땅콩버터",
+    "피넛",
+    "피넛버터",
+    "땅콩분태",
+    "낙화생"
+   ],
+   "en": [
+    "peanut",
+    "peanuts"
+   ]
+  },
+  {
+   "id": "SOY",
+   "label": "대두",
+   "high_risk": true,
+   "aliases": [
+    "대두",
+    "콩"
+   ],
+   "derived": [
+    "대두유",
+    "대두단백",
+    "분리대두단백",
+    "간장",
+    "양조간장",
+    "된장",
+    "고추장",
+    "두부",
+    "두유",
+    "레시틴",
+    "대두레시틴",
+    "콩가루",
+    "춘장",
+    "청국장"
+   ],
+   "en": [
+    "soy",
+    "soybean",
+    "soybeans",
+    "soya",
+    "lecithin"
+   ]
+  },
+  {
+   "id": "WHEAT",
+   "label": "밀",
+   "high_risk": true,
+   "aliases": [
+    "밀"
+   ],
+   "derived": [
+    "밀가루",
+    "소맥분",
+    "강력분",
+    "중력분",
+    "박력분",
+    "글루텐",
+    "밀글루텐",
+    "빵가루",
+    "소맥전분",
+    "밀전분",
+    "통밀",
+    "맥아",
+    "부침가루",
+    "튀김가루"
+   ],
+   "en": [
+    "wheat",
+    "gluten"
+   ]
+  },
+  {
+   "id": "MACKEREL",
+   "label": "고등어",
+   "high_risk": false,
+   "aliases": [
+    "고등어"
+   ],
+   "derived": [
+    "고등어추출물"
+   ],
+   "en": [
+    "mackerel"
+   ]
+  },
+  {
+   "id": "CRAB",
+   "label": "게",
+   "high_risk": false,
+   "aliases": [
+    "게"
+   ],
+   "derived": [
+    "꽃게",
+    "대게",
+    "킹크랩",
+    "크랩",
+    "게살",
+    "게추출물"
+   ],
+   "en": [
+    "crab"
+   ]
+  },
+  {
+   "id": "SHRIMP",
+   "label": "새우",
+   "high_risk": false,
+   "aliases": [
+    "새우"
+   ],
+   "derived": [
+    "새우젓",
+    "새우분말",
+    "새우추출물",
+    "건새우",
+    "쉬림프"
+   ],
+   "en": [
+    "shrimp",
+    "prawn"
+   ]
+  },
+  {
+   "id": "PORK",
+   "label": "돼지고기",
+   "high_risk": false,
+   "aliases": [
+    "돼지고기",
+    "돈육"
+   ],
+   "derived": [
+    "돼지지방",
+    "돈지",
+    "라드",
+    "돼지뼈",
+    "돈골",
+    "베이컨",
+    "햄"
+   ],
+   "en": [
+    "pork",
+    "lard"
+   ]
+  },
+  {
+   "id": "PEACH",
+   "label": "복숭아",
+   "high_risk": false,
+   "aliases": [
+    "복숭아"
+   ],
+   "derived": [
+    "복숭아과즙",
+    "복숭아농축액",
+    "황도",
+    "백도"
+   ],
+   "en": [
+    "peach"
+   ]
+  },
+  {
+   "id": "TOMATO",
+   "label": "토마토",
+   "high_risk": false,
+   "aliases": [
+    "토마토"
+   ],
+   "derived": [
+    "토마토페이스트",
+    "토마토케첩",
+    "케첩",
+    "케찹",
+    "토마토소스",
+    "토마토분말"
+   ],
+   "en": [
+    "tomato",
+    "tomatoes"
+   ]
+  },
+  {
+   "id": "SULFITE",
+   "label": "아황산류",
+   "high_risk": false,
+   "aliases": [
+    "아황산류",
+    "아황산"
+   ],
+   "derived": [
+    "아황산나트륨",
+    "산성아황산나트륨",
+    "메타중아황산나트륨",
+    "메타중아황산칼륨",
+    "무수아황산",
+    "차아황산나트륨",
+    "이산화황"
+   ],
+   "en": [
+    "sulfite",
+    "sulfites",
+    "sulphite"
+   ]
+  },
+  {
+   "id": "WALNUT",
+   "label": "호두",
+   "high_risk": false,
+   "aliases": [
+    "호두"
+   ],
+   "derived": [
+    "호두분태",
+    "월넛"
+   ],
+   "en": [
+    "walnut",
+    "walnuts"
+   ]
+  },
+  {
+   "id": "CHICKEN",
+   "label": "닭고기",
+   "high_risk": false,
+   "aliases": [
+    "닭고기",
+    "계육"
+   ],
+   "derived": [
+    "닭가슴살",
+    "닭육수",
+    "치킨",
+    "치킨파우더",
+    "닭뼈"
+   ],
+   "en": [
+    "chicken"
+   ]
+  },
+  {
+   "id": "BEEF",
+   "label": "쇠고기",
+   "high_risk": false,
+   "aliases": [
+    "쇠고기",
+    "소고기",
+    "우육"
+   ],
+   "derived": [
+    "비프",
+    "사골",
+    "소뼈",
+    "우지",
+    "쇠고기추출물"
+   ],
+   "en": [
+    "beef"
+   ]
+  },
+  {
+   "id": "SQUID",
+   "label": "오징어",
+   "high_risk": false,
+   "aliases": [
+    "오징어"
+   ],
+   "derived": [
+    "오징어채",
+    "오징어추출물"
+   ],
+   "en": [
+    "squid"
+   ]
+  },
+  {
+   "id": "SHELLFISH",
+   "label": "조개류",
+   "high_risk": false,
+   "aliases": [
+    "조개류",
+    "조개",
+    "굴",
+    "전복",
+    "홍합"
+   ],
+   "derived": [
+    "바지락",
+    "가리비",
+    "대합",
+    "모시조개",
+    "재첩",
+    "꼬막",
+    "굴소스",
+    "조개추출물",
+    "홍합추출물"
+   ],
+   "en": [
+    "shellfish",
+    "oyster",
+    "abalone",
+    "mussel",
+    "clam"
+   ]
+  },
+  {
+   "id": "PINE_NUT",
+   "label": "잣",
+   "high_risk": false,
+   "aliases": [
+    "잣"
+   ],
+   "derived": [
+    "잣가루"
+   ],
+   "en": [
+    "pine nut",
+    "pinenut"
+   ]
+  }
+ ],
+ "false_positive_guard": {
+  "_note": "짧은 단어(밀, 게, 콩, 잣, 굴)가 다른 단어 안에 우연히 들어가 오탐하는 경우를 막는 예외 목록",
+  "밀": [
+   "밀폐",
+   "밀봉",
+   "비밀",
+   "정밀",
+   "밀도",
+   "밀크"
+  ],
+  "게": [
+   "하게",
+   "있게",
+   "되게",
+   "않게",
+   "게시",
+   "게재",
+   "무게"
+  ],
+  "콩": [
+   "강낭콩",
+   "완두콩",
+   "녹두"
+  ],
+  "굴": [
+   "굴곡"
+  ]
+ }
+}
