@@ -1,0 +1,9 @@
+﻿abstained,allergen_fn,allergen_fp,allergen_tp,condition,date_correct,engine,file,gt_allergen,gt_date,gt_may,gt_name,may_fn,may_fp,may_tp,n_boxes,name_cer,name_exact,pred_contains,pred_date,pred_may,pred_name,pred_status,product_id,risk_false_alarm,risk_missed,risk_silent_missed,risk_under,wrong_date_spoken
+False,1,0,7,c0,True,easyocr,easyocr_p01_c0_1.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,1,0,5,103,0.4,False,밀;새우;대두;우유;토마토;게;돼지고기,2027-04-14,닭고기;오징어;땅콩;알류;조개류,매문새우망,ok,p01,,쇠고기,쇠고기,,False
+True,8,0,0,c1,False,easyocr,easyocr_p01_c1_1.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,6,0,0,62,0.6,False,,,,새우히,unknown,p01,,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,,,False
+True,8,0,0,c5,True,easyocr,easyocr_p01_c5_1.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,6,0,0,38,1.0,False,,2027-04-14,,농심,unknown,p01,,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,,,False
+True,1,0,7,c6,True,easyocr,easyocr_p01_c6_L2.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,1,0,5,105,1.0,False,밀;새우;대두;우유;토마토;게;돼지고기,2027-04-14,닭고기;오징어;땅콩;알류;조개류,농심,unknown,p01,,쇠고기,쇠고기,,False
+False,1,0,7,c6,True,easyocr,easyocr_p01_c6_L4.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,1,0,5,102,1.0,False,밀;새우;대두;우유;토마토;게;돼지고기,2027-04-14,닭고기;오징어;땅콩;알류;조개류,농심,ok,p01,,쇠고기,쇠고기,,False
+False,0,0,8,c0,True,paddle,paddle_p01_c0_1.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,0,0,6,84,0.2,False,밀;새우;대두;우유;토마토;게;돼지고기;쇠고기,2027-04-14,닭고기;오징어;땅콩;알류;잣;조개류,매운새우깔,ok,p01,,,,,False
+False,7,0,1,c1,True,paddle,paddle_p01_c1_1.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,6,0,0,53,0.6,False,우유,2027-04-14,,새우강,ok,p01,,게;대두;돼지고기;밀;새우;쇠고기;토마토,게;대두;돼지고기;밀;새우;쇠고기;토마토,,False
+False,0,0,8,c6,True,paddle,paddle_p01_c6_L2.json,게;대두;돼지고기;밀;새우;쇠고기;우유;토마토,2027-04-14,닭고기;땅콩;알류;오징어;잣;조개류,매운새우깡,0,0,6,75,0.0,True,밀;새우;대두;우유;토마토;게;돼지고기;쇠고기,2027-04-14,닭고기;오징어;땅콩;알류;잣;조개류,매운새우깡,ok,p01,,,,,False

@@ -1,0 +1,79 @@
+{
+  "n_images": 8,
+  "product_name": {
+    "n": 8,
+    "exact": 0.125,
+    "cer_mean": 0.6
+  },
+  "expiry": {
+    "n": 8,
+    "date_accuracy": 0.875,
+    "abstain_rate": 0.375,
+    "wrong_date_spoken_rate": 0.0
+  },
+  "allergen_contains": {
+    "n": 8,
+    "tp": 38,
+    "fp": 0,
+    "fn": 26,
+    "precision": 1.0,
+    "recall": 0.5938,
+    "f1": 0.7451,
+    "macro_f1": 0.7341
+  },
+  "allergen_may_contain": {
+    "n": 8,
+    "tp": 27,
+    "fp": 0,
+    "fn": 21,
+    "precision": 1.0,
+    "recall": 0.5625,
+    "f1": 0.72,
+    "macro_f1": 0.7077
+  },
+  "risk": {
+    "n_cases": 64,
+    "missed_rate": 0.4062,
+    "under_warned_rate": 0.0,
+    "misclassified_rate": 0.4062,
+    "silent_missed_rate": 0.1562,
+    "false_alarms": 0
+  },
+  "by_group": {
+    "easyocr/c0": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.9333
+    },
+    "easyocr/c1": {
+      "n": 1,
+      "date_accuracy": 0.0,
+      "contains_f1": 0.0
+    },
+    "easyocr/c5": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.0
+    },
+    "easyocr/c6": {
+      "n": 2,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.9333
+    },
+    "paddle/c0": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 1.0
+    },
+    "paddle/c1": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.2222
+    },
+    "paddle/c6": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 1.0
+    }
+  }
+}
