@@ -1,3 +1,16 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Jupyter / Colab
 .ipynb_checkpoints/
+
+# 실행할 때마다 만드는 결과 (보관할 결과는 results/에 직접 저장)
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
