@@ -36,11 +36,13 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
-from ._deps import Config
+from ._deps import Config, UserProfile
 from .adapters import load
 from .allergens import ALLERGENS, find_allergens_ocr
 from .api import analyze
 from .dates import parse_dates
+from .fields import extract_fields
+from .risk import assess_risk
 
 _PID = re.compile(r"(?:^|_)([pP]\d{2,4})(?=_|\.|$)")
 _COND = re.compile(r"_(c\d+)_", re.I)
@@ -118,6 +120,8 @@ def evaluate(ocr_files: list[Path], truth: dict[str, dict], today: dt.date, cfg:
             rec["gt_name"] = t["name"]
             rec["name_exact"] = (fields.product_name.value or "").replace(" ", "") == t["name"].replace(" ", "")
             rec["name_cer"] = round(cer(t["name"], fields.product_name.value or ""), 4)
+            # 엉뚱한 이름을 말함: 이름을 말했는데 글자 절반 이상이 틀림 (브랜드 로고, 광고 문구 등)
+            rec["name_wrong_spoken"] = bool(fields.product_name.value) and rec["name_cer"] > 0.5
         if t.get("expiry"):
             rec["gt_date"] = t["expiry"].isoformat()
             rec["date_correct"] = e.date == t["expiry"]
@@ -147,6 +151,7 @@ def summarize(records: list[dict]) -> dict:
             "n": len(named),
             "exact": round(sum(r["name_exact"] for r in named) / len(named), 4),
             "cer_mean": round(sum(r["name_cer"] for r in named) / len(named), 4),
+            "wrong_spoken_rate": round(sum(r["name_wrong_spoken"] for r in named) / len(named), 4),
         }
     dated = [r for r in records if "date_correct" in r]
     if dated:
@@ -211,7 +216,8 @@ def to_markdown(rep: dict, title: str) -> str:
     L = [f"# 정보 추출 평가: {title}", "", f"사진 {rep['n_images']}장", ""]
     if "product_name" in rep:
         p = rep["product_name"]
-        L += ["## 제품명", "", "| 완전 일치 | 평균 CER |", "|---|---|", f"| {p['exact']} | {p['cer_mean']} |", ""]
+        L += ["## 제품명", "", "| 완전 일치 | 평균 CER | 엉뚱한 이름을 말함 |", "|---|---|---|",
+              f"| {p['exact']} | {p['cer_mean']} | {p['wrong_spoken_rate']} |", ""]
     if "expiry" in rep:
         e = rep["expiry"]
         L += ["## 소비기한", "", "| 날짜 정확도 | 판단 보류율 | 틀린 날짜를 말한 비율 |", "|---|---|---|",
@@ -235,17 +241,138 @@ def to_markdown(rep: dict, title: str) -> str:
     return "\n".join(L)
 
 
+# ------------------------------------------------------------------ 기준값별 위험 놓침률·보류율
+THRESHOLDS = tuple(round(i * 0.05, 2) for i in range(20))  # 0.00 ~ 0.95
+_ABSTAIN_REASONS = ("allergen_unknown", "allergen_uncertain", "text_unreadable")
+
+
+def sweep(ocr_files: list[Path], truth: dict[str, dict], today: dt.date, thresholds=THRESHOLDS) -> list[dict]:
+    """신뢰도 기준값(소비기한 expiry_min_conf, 알레르기 allergen_min_conf 를 같은 값으로)을 바꿔 가며 잰다.
+
+    위험한 경우 (놓치면 안 됨)
+    - 소비기한: 정답 기한 다음 날을 '오늘'로 놓았을 때 '지났다'고 말하는지 (지났는데 괜찮다고 하면 놓침)
+    - 알레르기: 정답 함유 성분 하나를 내 알레르기로 등록했을 때 '들어 있다'고 말하는지
+      (혼입 가능으로 말하면 '약하게 말함', 아무 경고가 없으면 놓침)
+    안전한 경우 (경고하면 안 됨)
+    - 알레르기: 함유·혼입 어디에도 없는 성분을 등록했을 때 (경고하면 헛경보)
+    보류: '확인 필요·다시 찍어 주세요'로 넘긴 경우. 기준값을 높이면 놓침은 줄고 보류는 는다.
+    """
+    items = []
+    for f in ocr_files:
+        inp = load(f)
+        pid = product_of(f.name) or product_of(inp.image or "")
+        if pid in truth:
+            items.append((truth[pid], inp.boxes))
+
+    # 알레르기 추출 결과는 기준값과 상관없어서 한 번만 계산한다
+    allergen_cases = []  # (정답 종류, 추출 결과, 프로필)
+    for tr, boxes in items:
+        if "allergen" not in tr:
+            continue
+        gt_c, gt_any = set(tr["allergen"]), set(tr["allergen"]) | set(tr.get("may", []))
+        for a in ALLERGENS:
+            if a in gt_any and a not in gt_c:
+                continue  # 혼입 가능 성분은 '위험/안전' 어느 쪽으로도 세지 않는다
+            prof = UserProfile(allergens=[a])
+            allergen_cases.append(("danger" if a in gt_c else "safe", a, extract_fields(boxes, prof, today, Config()), prof))
+
+    rows = []
+    for t in thresholds:
+        cfg = Config(expiry_min_conf=t)
+        c = defaultdict(int)
+        for tr, boxes in items:
+            if not tr.get("expiry"):
+                continue
+            f = extract_fields(boxes, None, tr["expiry"] + dt.timedelta(days=1), cfg)
+            c["danger"] += 1
+            c["date_cases"] += 1
+            if f.expiry.status in ("unknown", "elsewhere") or f.expiry.date is None:
+                c["abstain"] += 1
+            else:
+                c["missed" if f.expiry.status != "expired" else "caught"] += 1
+                c["wrong_date"] += f.expiry.date != tr["expiry"]
+        for kind, a, f, prof in allergen_cases:
+            r = assess_risk(f, prof, allergen_min_conf=t)
+            hit, may = a in f.allergens.user_hits, a in f.allergens.user_may_hits
+            abstain = any(x in r.reasons for x in _ABSTAIN_REASONS)
+            if kind == "danger":
+                c["danger"] += 1
+                c["caught" if hit else "under" if may else "abstain" if abstain else "missed"] += 1
+            else:
+                c["safe"] += 1
+                c["false_alarm" if hit or may else "abstain" if abstain else "safe_ok"] += 1
+        total = c["danger"] + c["safe"]
+        rows.append({
+            "threshold": t,
+            "miss_rate": round(c["missed"] / c["danger"], 4) if c["danger"] else None,
+            "under_warned_rate": round(c["under"] / c["danger"], 4) if c["danger"] else None,
+            "abstain_rate": round(c["abstain"] / total, 4) if total else None,
+            "wrong_date_spoken_rate": round(c["wrong_date"] / c["date_cases"], 4) if c["date_cases"] else None,
+            "false_alarm_rate": round(c["false_alarm"] / c["safe"], 4) if c["safe"] else None,
+            "danger_cases": c["danger"], "safe_cases": c["safe"],
+        })
+    return rows
+
+
+def sweep_markdown(rows: list[dict], current: float = 0.6) -> str:
+    L = ["## 기준값별 위험 놓침률·보류율", "",
+         "기준값보다 신뢰도가 낮으면 판단을 보류한다 (소비기한·알레르기 같은 값). 지금 기본값은 "
+         f"{current}.", "",
+         "| 기준값 | 위험 놓침률 | 약하게 말함 | 보류율 | 틀린 날짜를 말함 | 헛경보 |", "|---|---|---|---|---|---|"]
+    for r in rows:
+        mark = " **(현재)**" if abs(r["threshold"] - current) < 1e-9 else ""
+        L.append(f"| {r['threshold']:.2f}{mark} | {r['miss_rate']} | {r['under_warned_rate']} | {r['abstain_rate']} | "
+                 f"{r['wrong_date_spoken_rate']} | {r['false_alarm_rate']} |")
+    n = rows[0] if rows else {}
+    L += ["", f"위험한 경우 {n.get('danger_cases', 0)}개, 안전한 경우 {n.get('safe_cases', 0)}개.", ""]
+    return "\n".join(L)
+
+
+def plot_sweep(rows: list[dict], path: Path, current: float = 0.6) -> bool:
+    """위험 놓침률·보류율 그래프 (보고서·발표용). matplotlib 이 없으면 건너뛴다."""
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return False
+    xs = [r["threshold"] for r in rows]
+    fig, ax = plt.subplots(figsize=(6, 3.6), dpi=150)
+    ax.plot(xs, [r["miss_rate"] or 0 for r in rows], marker="o", label="miss rate (said safe)")
+    ax.plot(xs, [r["abstain_rate"] or 0 for r in rows], marker="s", label="abstain rate (asked to retake)")
+    ax.plot(xs, [r["wrong_date_spoken_rate"] or 0 for r in rows], ls="--", label="wrong date spoken")
+    ax.axvline(current, color="gray", lw=1, ls=":")
+    ax.text(current + 0.01, 0.97, f"current {current}", color="gray", fontsize=8, va="top")
+    ax.set_xlabel("confidence threshold")
+    ax.set_ylabel("rate")
+    ax.set_ylim(0, 1.05)
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8, loc="upper left")
+    fig.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path)
+    plt.close(fig)
+    return True
+
+
 def main(argv=None) -> dict:
     ap = argparse.ArgumentParser(description="정보 추출 평가 (저장된 OCR 결과 + 정답 라벨)")
     ap.add_argument("--ocr-dir", required=True)
     ap.add_argument("--labels", required=True)
     ap.add_argument("--today", default=None)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--sweep", action="store_true", help="기준값별 위험 놓침률·보류율 표와 그래프도 만들기")
     args = ap.parse_args(argv)
     today = dt.date.fromisoformat(args.today) if args.today else dt.date.today()
     files = sorted(p for p in Path(args.ocr_dir).glob("*.json"))
     records, rep = evaluate(files, load_labels(Path(args.labels)), today, Config())
     md = to_markdown(rep, f"{args.ocr_dir} (기준일 {today})")
+    rows = []
+    if args.sweep:
+        rows = sweep(files, load_labels(Path(args.labels)), today)
+        rep["sweep"] = rows
+        md += "\n" + sweep_markdown(rows)
     print(md)
     if args.out:
         out = Path(args.out)
@@ -258,6 +385,12 @@ def main(argv=None) -> dict:
             w.writeheader()
             for r in records:
                 w.writerow({k: (";".join(v) if isinstance(v, list) else v) for k, v in r.items()})
+        if rows:
+            with (out / "sweep.csv").open("w", encoding="utf-8-sig", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+                w.writeheader()
+                w.writerows(rows)
+            plot_sweep(rows, out / "sweep.png")
     return rep
 
 

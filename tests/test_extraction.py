@@ -289,3 +289,76 @@ def test_cli_and_demo_run(capsys):
     assert out[0]["risk"]["level"] == "danger"
     md = demo([])
     assert "AI 2 run_pipeline" in md and "food-package-ocr" in md
+
+
+# ------------------------------------------------------------------ 3주차: 위험 판단 예외 처리
+def test_unreadable_photo_claims_nothing():
+    info = extract([{"text": "흐림", "score": 0.1}, {"text": "ㅁㄴ", "score": 0.2}], ["우유"])
+    assert info["product_name"] is None and info["allergens"]["found"] == []
+    assert info["risk"]["level"] == "unknown" and "text_unreadable" in info["risk"]["reasons"]
+
+
+def test_conflicting_same_kind_dates_abstain():
+    """앞·뒤에 찍힌 소비기한 중 하나를 잘못 읽으면 어느 쪽인지 모른다 → 날짜를 말하지 않음"""
+    e = run("소비기한 2026.12.01", "소비기한 2026.12.07").expiry
+    assert e.status == "unknown"
+    assert run("소비기한 2026.12.01", "소비기한 2026.12.01").expiry.status == "ok"  # 같은 날짜면 괜찮다
+    assert run("유통기한 2026.12.01", "소비기한 2026.12.07").expiry.status == "ok"  # 종류가 다르면 소비기한 우선
+
+
+def test_english_contains_and_may_contain_on_one_line():
+    a = run("Contains: milk, soy. May contain peanuts.").allergens
+    assert a.contains == ["우유", "대두"] and a.may_contain == ["땅콩"]
+
+
+def test_milk_sell_by_date():
+    e = run("유통기한 26.11.12").expiry  # 냉장 우유류는 2031년까지 유통기한 표기
+    assert e.kind == "sell_by" and e.status == "soon"
+
+
+def test_truncated_allergen_list_is_uncertain_for_user():
+    f = run("알레르기 유발물질: 밀, 우유, 대두,", "소비기한 2026.12.10까지")
+    assert f.allergens.contains == ["밀", "우유", "대두"]
+    r = assess_risk(f, UserProfile(allergens=["땅콩"]))
+    assert r.level == "unknown" and "allergen_uncertain" in r.reasons  # 잘린 뒤에 땅콩이 있을 수 있다
+    mine = UserProfile(allergens=["우유"])
+    f = run("알레르기 유발물질: 밀, 우유, 대두,", "소비기한 2026.12.10까지", profile=mine)
+    assert assess_risk(f, mine).level == "danger"  # 보이는 성분은 그대로 위험
+
+
+def test_blurry_allergen_line_is_uncertain_for_user():
+    f = run("밀, 대두 함유", "소비기한 2026.12.10까지", conf=0.45)
+    assert assess_risk(f, UserProfile(allergens=["땅콩"])).reasons[-1] == "allergen_uncertain"
+
+
+# ------------------------------------------------------------------ 3주차: 제품명
+def test_brand_logo_is_not_product_name():
+    boxes = [box("농심", 10, 10, 210, 110), box("매운새우깡", 10, 120, 230, 190), box("새우를 넣어 만들어요", 10, 200, 300, 230)]
+    assert extract_fields(boxes, None, TODAY, Config()).product_name.value == "매운새우깡"
+
+
+def test_brand_with_ocr_extra_letter():
+    boxes = [box("농심물", 10, 10, 210, 110), box("고소한 두유", 10, 120, 200, 180)]
+    assert extract_fields(boxes, None, TODAY, Config()).product_name.value == "고소한 두유"
+
+
+def test_small_text_is_not_guessed_as_name():
+    boxes = [box("농심", 10, 10, 210, 110), box("골고루", 10, 130, 80, 160), box("영양정보", 10, 170, 200, 250)]
+    assert extract_fields(boxes, None, TODAY, Config()).product_name.value is None  # 모르면 말하지 않는다
+
+
+def test_product_label_with_ocr_typo():
+    boxes = [box("제품생", 10, 10, 60, 40), box("매운새우", 70, 10, 160, 40), box("식품유형 과자", 300, 10, 420, 40)]
+    assert extract_fields(boxes, None, TODAY, Config()).product_name.value == "매운새우"
+
+
+# ------------------------------------------------------------------ 3주차: 기준값별 위험 놓침률·보류율
+def test_threshold_sweep_tradeoff():
+    from extraction.evaluate import sweep
+
+    rows = sweep(sorted(REAL.glob("*.json")), load_labels(LABELS), dt.date(2026, 11, 17), thresholds=(0.0, 0.6, 0.95))
+    lo, cur, hi = rows
+    assert lo["danger_cases"] == 72 and lo["safe_cases"] == 40
+    assert hi["miss_rate"] <= cur["miss_rate"] <= lo["miss_rate"]  # 기준을 높이면 놓침이 줄고
+    assert hi["abstain_rate"] >= cur["abstain_rate"] >= lo["abstain_rate"]  # 보류가 는다
+    assert cur["miss_rate"] == 0.0 and cur["wrong_date_spoken_rate"] == 0.0 and cur["false_alarm_rate"] == 0.0

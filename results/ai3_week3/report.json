@@ -1,0 +1,282 @@
+{
+  "n_images": 8,
+  "product_name": {
+    "n": 8,
+    "exact": 0.125,
+    "cer_mean": 0.6,
+    "wrong_spoken_rate": 0.0
+  },
+  "expiry": {
+    "n": 8,
+    "date_accuracy": 0.875,
+    "abstain_rate": 0.375,
+    "wrong_date_spoken_rate": 0.0
+  },
+  "allergen_contains": {
+    "n": 8,
+    "tp": 38,
+    "fp": 0,
+    "fn": 26,
+    "precision": 1.0,
+    "recall": 0.5938,
+    "f1": 0.7451,
+    "macro_f1": 0.7341
+  },
+  "allergen_may_contain": {
+    "n": 8,
+    "tp": 27,
+    "fp": 0,
+    "fn": 21,
+    "precision": 1.0,
+    "recall": 0.5625,
+    "f1": 0.72,
+    "macro_f1": 0.7077
+  },
+  "risk": {
+    "n_cases": 64,
+    "missed_rate": 0.4062,
+    "under_warned_rate": 0.0,
+    "misclassified_rate": 0.4062,
+    "silent_missed_rate": 0.1562,
+    "false_alarms": 0
+  },
+  "by_group": {
+    "easyocr/c0": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.9333
+    },
+    "easyocr/c1": {
+      "n": 1,
+      "date_accuracy": 0.0,
+      "contains_f1": 0.0
+    },
+    "easyocr/c5": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.0
+    },
+    "easyocr/c6": {
+      "n": 2,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.9333
+    },
+    "paddle/c0": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 1.0
+    },
+    "paddle/c1": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 0.2222
+    },
+    "paddle/c6": {
+      "n": 1,
+      "date_accuracy": 1.0,
+      "contains_f1": 1.0
+    }
+  },
+  "sweep": [
+    {
+      "threshold": 0.0,
+      "miss_rate": 0.1389,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.2411,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.05,
+      "miss_rate": 0.1111,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.3482,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.1,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4018,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.15,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4018,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.2,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4018,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.25,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4107,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.3,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4196,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.35,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4196,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.4,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4196,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.45,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4643,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.5,
+      "miss_rate": 0.0972,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.4643,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.55,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5714,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.6,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5714,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.65,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5714,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.7,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5714,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.75,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5714,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.8,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.5893,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.85,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.6339,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.9,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.6607,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    },
+    {
+      "threshold": 0.95,
+      "miss_rate": 0.0,
+      "under_warned_rate": 0.0,
+      "abstain_rate": 0.6607,
+      "wrong_date_spoken_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "danger_cases": 72,
+      "safe_cases": 40
+    }
+  ]
+}

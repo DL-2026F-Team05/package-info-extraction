@@ -36,6 +36,7 @@ PENALTY = {
     "elsewhere_adopted": 0.9,  # '별도표기일까지' 문구 + 종류 모르는 날짜를 소비기한으로 본 경우
     "before_manufacture": 0.5,  # 소비기한이 제조일보다 앞섬 → 잘못 읽었을 가능성
     "implausible": 0.5,  # 오늘보다 3년 넘게 지났거나 10년 넘게 남음
+    "conflicting_dates": 0.5,  # 같은 종류(예: 소비기한)인데 날짜가 서로 다름 → 하나를 잘못 읽었을 수 있음
     "relative": 0.95,
     "until_only": 0.95,  # 종류 키워드 없이 '○○까지'만 있는 날짜를 소비기한으로 본 경우
 }
@@ -300,6 +301,12 @@ def choose_expiry(lines: list[tuple[str, float]], today: dt.date) -> ExpiryChoic
     if best is not None and best.kind == "unknown" and best.until:
         # 날짜 바로 뒤의 '까지'는 기한 표시다 (제조일자에는 붙지 않는다). 2024년부터 식품은 소비기한 표시
         best = replace(best, kind="use_by").penalize("until_only")
+
+    if best is not None and best.kind != "unknown":
+        # 같은 종류 기한이 서로 다른 날짜로 두 번 이상 읽힘 (앞·뒤에 찍힌 날짜 중 하나를 잘못 읽은 경우 등)
+        others = {c.date for c in cands if c.kind == best.kind and c.date != best.date and c.conf >= 0.5}
+        if others:
+            best = best.penalize("conflicting_dates")
 
     if best is not None:
         if mfg and best.date < mfg[0].date:

@@ -9,7 +9,7 @@
 |---|---|
 | danger | 내 알레르기 성분 함유(allergen_contains), 소비기한 지남(expired) |
 | caution | 내 알레르기 성분 혼입 가능(allergen_may), 기한 3일 이하(expiry_soon) |
-| unknown | 기한을 못 읽음·판단 보류(expiry_unknown), 다른 면에 표기(expiry_elsewhere), 알레르기를 등록했는데 표시를 못 찾음(allergen_unknown) |
+| unknown | 기한을 못 읽음·판단 보류(expiry_unknown), 다른 면에 표기(expiry_elsewhere), 글자를 거의 못 읽음(text_unreadable), 알레르기를 등록했는데 표시를 못 찾음(allergen_unknown)·흐리거나 잘려서 확실하지 않음(allergen_uncertain) |
 | ok | 위에 해당 없음 |
 
 내 알레르기 성분이 흐린 글자에서 오탈자로 맞춰진 경우(allergen_uncertain)도 함유로 본다. 놓치는 것보다 한 번 더 확인하게 하는 쪽이 안전하다.
@@ -27,7 +27,8 @@ from .dates import DateCandidate, kind_of
 _KINDS = ("use_by", "sell_by", "best_before")
 _DANGER = ("allergen_contains", "expired")
 _CAUTION = ("allergen_may", "expiry_soon")
-_UNKNOWN = ("expiry_unknown", "expiry_elsewhere", "allergen_unknown")
+_UNKNOWN = ("expiry_unknown", "expiry_elsewhere", "text_unreadable", "allergen_unknown", "allergen_uncertain")
+ALLERGEN_MIN_CONF = 0.6  # 알레르기 정보 신뢰도가 이보다 낮으면 '내 성분이 없다'고 단정하지 않는다
 
 
 def build_expiry(
@@ -67,8 +68,20 @@ def match_profile(alg: Allergens, profile: UserProfile | None) -> Allergens:
     )
 
 
-def assess_risk(fields: Fields, profile: UserProfile | None = None) -> Risk:
-    """profile 을 주면 '알레르기를 등록했는데 표시를 못 찾은 경우'도 판단한다 (없으면 기존과 같다)."""
+def _is_empty(fields: Fields) -> bool:
+    """아무 정보도 못 뽑음 (글자를 거의 못 읽은 사진)."""
+    return not (
+        fields.product_name.value or fields.expiry.raw or fields.allergens.contains or fields.allergens.may_contain
+        or fields.ingredients.value or fields.nutrition.value or fields.caution.value
+    )
+
+
+def assess_risk(fields: Fields, profile: UserProfile | None = None, allergen_min_conf: float | None = None) -> Risk:
+    """profile 을 주면 '알레르기를 등록했는데 표시를 못 찾았거나 흐린 경우'도 판단한다 (없으면 기존과 같다).
+
+    allergen_min_conf: 알레르기 판단 보류 기준값 (기본 ALLERGEN_MIN_CONF). 평가에서 기준값을 바꿔 볼 때 쓴다.
+    """
+    min_conf = ALLERGEN_MIN_CONF if allergen_min_conf is None else allergen_min_conf
     exp, alg = fields.expiry, fields.allergens
     reasons: list[str] = []
     if alg.user_hits:
@@ -83,10 +96,15 @@ def assess_risk(fields: Fields, profile: UserProfile | None = None) -> Risk:
         reasons.append("expiry_unknown")
     if exp.status == "elsewhere":
         reasons.append("expiry_elsewhere")
+    if _is_empty(fields):
+        reasons.append("text_unreadable")
     has_profile = bool(profile and canonicalize_list(profile.allergens))
-    if has_profile and not alg.contains and not alg.may_contain:
-        # 알레르기 표시를 못 읽었는데 '특이사항 없음'이라고 하면 위험을 놓친다
-        reasons.append("allergen_unknown")
+    if has_profile and not alg.user_hits and not alg.user_may_hits:
+        # 알레르기 표시를 못 읽었거나 흐린데 '특이사항 없음'이라고 하면 위험을 놓친다
+        if not alg.contains and not alg.may_contain:
+            reasons.append("allergen_unknown")
+        elif alg.conf < min_conf:
+            reasons.append("allergen_uncertain")
 
     if any(r in _DANGER for r in reasons):
         level = "danger"

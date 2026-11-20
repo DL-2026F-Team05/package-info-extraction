@@ -26,21 +26,32 @@ from .allergens import find_allergens_ocr, ingredient_allergens
 from .dates import choose_expiry
 from .risk import build_expiry, match_profile
 
-_PRODUCT_KEY = re.compile(r"제\s*[품풍픔l1I|]\s*명\s*[:：]?\s*(.*)")
+# '제품명'과 OCR 이 잘못 읽은 모양 (제l명, 제품생, 제풍명 …)
+_PRODUCT_KEY = re.compile(r"제\s*[품풍픔l1I|]\s*[명맹멍생]\s*[:：]?\s*(.*)")
+# 포장 앞면에 크게 찍히는 회사·브랜드 이름. 제품명 후보에서 뺀다 (실제 사진에서 '농심'이 제품명으로 잡힘)
+BRANDS = frozenset("""
+농심 오뚜기 오뚜기몰 롯데 롯데제과 롯데웰푸드 롯데칠성 해태 해태제과 오리온 크라운 크라운제과 빙그레 서울우유 매일 매일유업
+남양 남양유업 삼양 삼양식품 팔도 청정원 대상 사조 동원 동원F&B 하림 동서 동서식품 풀무원 CJ CJ제일제당 비비고 백설 해찬들
+종가 종가집 삼립 SPC 파리바게뜨 농협 하나로 이마트 노브랜드 피코크 홈플러스 GS25 CU 세븐일레븐 코카콜라 펩시 동아오츠카
+광동 광동제약 웅진 일화 정관장 칠갑 진로 하이트 오가닉 Nongshim NONGSHIM Ottogi OTTOGI LOTTE Orion ORION CROWN Paldo
+""".split())
+_SENTENCE_END = re.compile(r"(?:요|다|니다|세요|하세요|습니다|에요|예요|해요)[.!~]*$")  # 광고 문구 ('…만들어요')
 _NAME_STOP = re.compile(
     r"소비|유통|기한|원재료|알레르기|유발|함유|보관|영양|제조|kcal|나트륨|식품\s*유형|내용량|주의|섭취|반품|교환|고객|상담|www|http|\d{4}"
+    r"|수화물|당류|단백질|지방|콜레스테롤|열량|바로\s*가기|이벤트|증정|할인|무료|분리\s*배출|재활용|소재지|주소|\d.*동\)"
 )
 _HANGUL2 = re.compile(r"[가-힣].*[가-힣]")
 # 표 형태 포장(제품명 | 매운새우깡)에서 '칸 이름'으로 쓰이는 말
 _LABEL = re.compile(
-    r"^\s*(?:제\s*품\s*명|식\s*품\s*유\s*형|원\s*재\s*료\s*명?(?:\s*및\s*함량)?|소\s*비\s*기\s*한|유\s*통\s*기\s*한|"
+    r"^\s*(?:제\s*[품풍픔l1I|]\s*[명맹멍생]|식\s*품\s*유\s*형|원\s*재\s*료\s*명?(?:\s*및\s*함량)?|소\s*비\s*기\s*한|유\s*통\s*기\s*한|"
     r"품\s*질\s*유\s*지\s*기\s*한|품\s*목(?:\s*보\s*고\s*번\s*호)?|보\s*고\s*번\s*호|포\s*장\s*재\s*질|내\s*용\s*량|"
     r"보\s*관\s*방\s*법|영\s*양\s*정\s*보|제\s*조\s*원|판\s*매\s*원|제\s*조\s*사|수\s*입\s*원|원\s*산\s*지)\s*[:：]?\s*$"
 )
 _INGREDIENTS = re.compile(r"(?:원\s*재\s*료\s*명?\s*(?:및\s*함량)?|\bingredients?\b)\s*[:：]?\s*(.*)", re.I)
 _NUTRITION = re.compile(r"kcal|나트륨|탄수화물|단백질|지방|영양\s*정보|영양\s*성분")
 _CAUTION = re.compile(r"보관|주의|섭취\s*(?:시|후|전)|개봉\s*후")
-_CONTAINS_WORDS = re.compile(r"알레\S?기|알러지|유발\s*물질")  # OCR 오타 '알레로기' 포함
+# OCR 오타 '알레로기', 수입품 'Contains: milk, soy' 포함 ('may contain'은 혼입이라 뺀다)
+_CONTAINS_WORDS = re.compile(r"알레\S?기|알러지|유발\s*물질|(?<!may )(?<!May )(?<!MAY )\bcontains?\s*[:：]", re.I)
 _ANCHOR = re.compile(r"원재료|소비|유통|기한|보관|영양|제품명|식품\s*유형|내용량|품목|포장|제조원|판매원|kcal|ingredient", re.I)
 
 # 혼입 가능 문구. items 가 성분 목록 쪽.
@@ -166,16 +177,42 @@ def pick_product_name(boxes: list[TextBox], lines: list[Line]) -> TextField:
     if tagged:
         best = max(tagged, key=lambda b: b.conf)
         return TextField(value=_clean_name(best.text) or best.text.strip(), conf=best.conf)
-    # 4) 가장 큰 글씨
-    cands = [
-        b for b in boxes
-        if _HANGUL2.search(b.text) and not _NAME_STOP.search(b.text) and len(b.text.strip()) <= 30
-        and not _LABEL.match(b.text)
-    ]
+    # 4) 가장 큰 글씨. 브랜드 이름·광고 문장·칸 이름·한 글자는 뺀다. 그럴듯한 게 없으면 말하지 않는다
+    cands = [b for b in boxes if _name_candidate(b)]
+    # 제품명은 앞면에서 가장 큰 글씨 중 하나다. 가장 큰 한글(브랜드·칸 이름 포함)의 60%보다 작으면
+    # 설명 문구일 가능성이 커서 말하지 않는다 (실제 사진: 로고를 빼면 '골고루' 같은 설명 글자가 남음)
+    tallest = max((box_height(b) for b in boxes if _HANGUL2.search(b.text) and b.conf >= 0.3), default=0.0)
+    if tallest > 0:
+        cands = [b for b in cands if box_height(b) >= 0.6 * tallest]
     if not cands:
         return TextField()
-    best = max(cands, key=lambda b: box_height(b) * b.conf)
+    best = max(cands, key=_name_score)
     return TextField(value=_clean_name(best.text) or best.text.strip(), conf=best.conf)
+
+
+_BRANDS_UPPER = frozenset(b.upper() for b in BRANDS)
+
+
+def _is_brand(text: str) -> bool:
+    """브랜드 이름만 있는 글자. OCR 이 뒤에 한 글자를 더 붙여 읽은 경우('농심물')도 브랜드로 본다."""
+    t = re.sub(r"[\s()（）㈜®™·.]|주식회사", "", text).upper()
+    if t in _BRANDS_UPPER:
+        return True
+    return len(t) >= 3 and t[:-1] in _BRANDS_UPPER
+
+
+def _name_candidate(b: TextBox) -> bool:
+    t = _clean_name(b.text)
+    return (
+        b.conf >= 0.3 and bool(_HANGUL2.search(t)) and len(t) <= 30 and not _NAME_STOP.search(t)
+        and not _LABEL.match(t) and not _is_brand(t) and not _SENTENCE_END.search(t)
+        and not re.search(r"\d.*(?:시|구|동|로|길)\)?$", t)  # 주소 ('…신대방동')
+    )
+
+
+def _name_score(b: TextBox) -> float:
+    hangul = len(re.findall(r"[가-힣]", b.text))
+    return box_height(b) * b.conf * (1.0 if hangul >= 3 else 0.6)
 
 
 # ------------------------------------------------------------------ 알레르기
@@ -245,6 +282,7 @@ def parse_allergens(lines: list[Line], ingredients: str | None = None) -> tuple[
     confs: list[float] = []
     used: set[int] = set()
     fuzzy_any = False
+    truncated = False  # 목록이 쉼표·여는 괄호로 끝남 → 사진 밖으로 잘렸을 수 있음
 
     def add(target: list[str], found: list[tuple[str, bool]]) -> None:
         nonlocal fuzzy_any
@@ -271,7 +309,7 @@ def parse_allergens(lines: list[Line], ingredients: str | None = None) -> tuple[
             # 한 줄에 '○○ 함유. 이 제품은 …시설' 이 같이 있으면 함유 부분만 본다
             m = _FACILITY_BEFORE.search(text) or _FACILITY_WORDS.search(text)
             head = text[: m.start()] if m else ""
-            if "함유" not in head:
+            if "함유" not in head and not _CONTAINS_WORDS.search(head):  # 'Contains: milk. May contain …'도 앞부분은 함유
                 continue
             text = head
         segment, evidence = None, [i]
@@ -308,6 +346,8 @@ def parse_allergens(lines: list[Line], ingredients: str | None = None) -> tuple[
             continue
         found = find_allergens_ocr(segment)
         if found:
+            if re.search(r"[,(·、]\s*$", segment.strip()):
+                truncated = True
             add(contains, found)
             raw.append(" ".join(lines[j][0] for j in evidence))
             confs.append(min(lines[j][1] for j in evidence))
@@ -324,6 +364,8 @@ def parse_allergens(lines: list[Line], ingredients: str | None = None) -> tuple[
     conf = min(confs) if confs else (0.0 if not contains else 0.5)
     if fuzzy_any:
         conf *= 0.8  # 오탈자로 맞춘 성분이 있으면 '틀릴 수 있어요' 안내가 나가게
+    if truncated:
+        conf *= 0.5  # 목록이 잘렸으면 더 있을 수 있다 → 내 성분이 없다고 단정하지 않게 (allergen_uncertain)
     return Allergens(contains=contains, may_contain=may, raw=raw, conf=round(min(1.0, conf), 4)), used
 
 
@@ -364,6 +406,14 @@ def _join_matching(lines: list[Line], rx, exclude=None) -> TextField:
     return TextField(value=" ".join(t for t, _ in picked), conf=min(c for _, c in picked))
 
 
+MIN_READABLE_CONF = 0.3  # 이 신뢰도 이상이면서 두 글자 이상인 박스가 하나도 없으면 '못 읽음'
+
+
+def is_unreadable(boxes: list[TextBox]) -> bool:
+    """읽을 만한 글자가 하나도 없는 사진. 이때는 흐린 글자로 아무것도 단정하지 않는다."""
+    return not any(b.conf >= MIN_READABLE_CONF and len(re.sub(r"\W", "", b.text)) >= 2 for b in boxes)
+
+
 def _clean_box(b: TextBox) -> TextBox:
     t = clean_ocr_text(b.text)
     return b if t == b.text else b.model_copy(update={"text": t})
@@ -378,6 +428,9 @@ def extract_fields(
     cfg = cfg or Config()
     today = today or kst_today()
     boxes = [_clean_box(b) for b in boxes]  # 파이프라인을 거치지 않고 바로 불러도 O→0 등을 고친다
+    if is_unreadable(boxes):
+        # 글자를 거의 못 읽은 사진: 아무것도 단정하지 않는다 → 위험 판단에서 text_unreadable (다시 찍기)
+        return Fields(allergens=match_profile(Allergens(), profile))
     box_lines = _box_lines(boxes)
     lines = _visual_lines(boxes)
     pairs = [(t, c) for t, c, _ in box_lines]

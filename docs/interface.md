@@ -86,7 +86,9 @@ risk = assess_risk(fields)                            # → Risk
 |---|---|
 | `danger` | `allergen_contains` 내 알레르기 함유, `expired` 소비기한 지남 |
 | `caution` | `allergen_may` 내 알레르기 혼입 가능, `expiry_soon` 3일 이하 |
-| `unknown` | `expiry_unknown` 기한 판단 보류, `expiry_elsewhere` 다른 면 표기, `allergen_unknown` 알레르기를 등록했는데 표시를 못 찾음 |
+| `unknown` | `expiry_unknown` 기한 판단 보류, `expiry_elsewhere` 다른 면 표기, `text_unreadable` 글자를 거의 못 읽음, `allergen_unknown` 알레르기를 등록했는데 표시를 못 찾음, `allergen_uncertain` 알레르기 표시가 흐리거나 잘려서 내 성분이 없다고 단정할 수 없음 |
 | `ok` | 해당 없음 |
 
-판단 보류: 날짜 신뢰도가 0.6보다 낮으면(일·월을 가를 수 없는 05/06/2027, 제조일보다 이른 소비기한, 3년 넘게 지났거나 10년 넘게 남은 날짜 포함) `status`를 `unknown`으로 두고 날짜를 말하지 않게 합니다.
+판단 보류: 날짜 신뢰도가 0.6보다 낮으면(일·월을 가를 수 없는 05/06/2027, 같은 종류 기한이 서로 다른 날짜로 읽힘, 제조일보다 이른 소비기한, 3년 넘게 지났거나 10년 넘게 남은 날짜 포함) `status`를 `unknown`으로 두고 날짜를 말하지 않게 합니다.
+
+`allergen_unknown`, `allergen_uncertain`은 사용자 알레르기를 알아야 판단할 수 있어서 `assess_risk(fields, profile)`처럼 profile 을 같이 넘길 때만 나옵니다. `extract()`는 항상 넘깁니다.

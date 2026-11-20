@@ -33,8 +33,8 @@ package-info-extraction/
 
 ## 실행 방법
 
-1. Colab에서 `notebooks/ai3_week2_extraction.ipynb`를 열고 **런타임 → 모두 실행**을 누릅니다. (1~2분)
-2. 테스트 → AI 2 OCR 결과로 추출 → 평가 → AI 4 안내 문장까지 연결 순서로 실행됩니다.
+1. Colab에서 `notebooks/ai3_week3_extraction.ipynb`를 열고 **런타임 → 모두 실행**을 누릅니다. (1~2분, 2주차는 `ai3_week2_extraction.ipynb`)
+2. 테스트 → AI 2 OCR 결과로 추출 → 평가(기준값별 위험 놓침률·보류율 포함) → AI 4 안내 문장까지 연결 순서로 실행됩니다.
 
 내 컴퓨터에서는:
 
@@ -42,7 +42,7 @@ package-info-extraction/
 pip install -r requirements.txt
 python -m pytest -q                                   # 테스트
 python -m extraction data/samples/ai2_week2 --allergy 우유 땅콩    # 추출
-python -m extraction.evaluate --ocr-dir data/samples/ai2_week2 --labels data/labels/labels.csv --today 2026-11-17
+python -m extraction.evaluate --ocr-dir data/samples/ai2_week2 --labels data/labels/labels.csv --today 2026-11-17 --sweep
 python -m extraction.demo                             # 모듈 연결 확인
 ```
 
@@ -94,3 +94,4 @@ info["priority"]              # ["allergens", "expiry", "product_name", "caution
 |---|---|---|---|
 | 1주차 | 11/03 ~ 11/08 | 핵심 정보 카테고리 정의, 날짜 표기·알레르겐 사전 구축, 정보 추출 로직 설계 | 완료 ([결과](week1/README.md)) |
 | 2주차 | 11/12 ~ 11/18 | 제품명·기한·알레르겐 추출, 날짜 정규화, 위험 판단 구현, 모듈 연결 | 완료 ([결과](results/ai3_week2/summary.md), [설명](extraction/README.md#2주차-추출날짜-정규화위험-판단-구현)) |
+| 3주차 | 11/19 ~ 11/25 | 핵심 정보 추출 정확도 개선, 위험 판단 예외 처리, F1 평가 | 진행 중: 예외 처리·제품명 개선·기준값별 평가 완료, 팀 사진 10종 F1 평가 남음 ([결과](results/ai3_week3/summary.md), [설명](extraction/README.md#3주차-정확도-개선예외-처리평가)) |
